@@ -1,0 +1,229 @@
+# For advice on how to change settings please see
+# http://dev.mysql.com/doc/refman/5.6/en/server-configuration-defaults.html
+
+[mysqld]	
+############################################################################
+###                        Basic Settings                                ###
+############################################################################
+server_id               				 = 1030238202
+user                    				 = mysql
+port                    				 = 3306
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+pid-file=/var/run/mysqld/mysqld.pid
+log-error=/var/log/mysqld.log
+default_storage_engine 					 = innodb
+max_connections         				 = 3000
+max_heap_table_size              = 200M 
+tmp_table_size                   = 512M
+transaction-isolation = READ-COMMITTED
+#从innodb 1.2版本开始,innodb支持多个purge thread,这样做的目的是为了进行加快undo页的回收,同时由于purge thread需要离散地读取undo页,这样也能更进一步的利用磁盘的随机读取性能
+innodb_purge_threads             = 4
+#MySQL5.6开始，默认打开，performance_schema用于收集数据库服务器性能参数,关闭可以提高一定的性能
+#performance_schema              = 0
+# 网络
+back_log                         = 500
+max_connect_errors               = 500
+net_buffer_length                = 1MB
+max_allowed_packet               = 128M
+thread_cache_size                = 256
+interactive_timeout              = 600000
+wait_timeout                     = 600000
+open_files_limit                 = 20000
+performance_schema_max_table_instances = 600
+table_definition_cache           = 400
+table_open_cache                 = 256
+table_open_cache_instances       = 32
+metadata_locks_hash_instances    = 32
+# 安全
+######################启用SSL加密######################
+#ssl-ca                          = ca.pem
+#ssl-cert                        = server-cert.pem
+#ssl-key                         = server-key.pem
+secure_auth                      = ON
+disconnect_on_expired_password   = ON
+local_infile                     = OFF
+skip_external_locking            = ON
+innodb_support_xa                = ON
+innodb_doublewrite               = ON
+innodb_commit_concurrency        = 0
+#内存
+join_buffer_size                 = 64M
+read_buffer_size                 = 16M
+read_rnd_buffer_size             = 32M
+sort_buffer_size                 = 32M
+bulk_insert_buffer_size          = 128M
+innodb_use_sys_malloc            = on
+innodb_sync_array_size           = 800
+#该参数值默认为0，代表发生需要恢复时，是否进行所有的恢复操作，但不能进行有效的恢复时，如数据页损坏，发生了corruption，MySQL数据库可能发生宕机，并把错误日志写入到错误日志文件，innodb_force_recovery还可以设置为6个非零值1--6。
+#innodb_force_recovery           = 0
+#在单服务器环境下external locking会让MySQL性能下降,需要禁用
+skip-external-locking
+#禁用DNS主机名查找,用内网地址请求,响应快
+skip_name_resolve                = ON
+#设置大小写不敏感,创建的表，数据库都是以小写形式存放在磁盘上，对于sql语句都是转换为小写对表和DB进行查找
+lower_case_table_names  				 = 1
+#timestamp类型字段缺省值设置OFF,针对系统需求，不开启
+#explicit_defaults_for_timestamp = true  
+#如果需要开启查询缓存
+query_cache_size                = 128M
+query_cache_type                = 1
+#sql_mode模式 
+sql_mode                         = NO_ENGINE_SUBSTITUTION,PIPES_AS_CONCAT,ANSI_QUOTES,STRICT_TRANS_TABLES
+#此参数仅在启用二进制日志时有效，用于控制创建存储函数时如果会导致不安全的事件记录二进制日志条件下是否禁止创建存储函数。
+#默认值为0，表示除非用户除了CREATE ROUTING或ALTER ROUTINE权限外还有SUPER权限，否则将禁止创建或修改存储函数，
+#同时，还要求在创建函数时必需为之使用DETERMINISTIC属性，再不然就是附带READS SQL DATA或NO SQL属性。设置其值为1时则不启用这些限制。
+log_bin_trust_function_creators  = TRUE
+############################################################################
+### 								Error Logs & Slow logs                               ###
+############################################################################
+slow_query_log          				 = 1
+long_query_time         				 = 3
+#log_queries_not_using_indexes 	 = 1
+#log_slow_admin_statements			 = 0
+#log_slow_slave_statements			 = 0
+############################################################################
+###										InnoDB Settings                                    ###
+############################################################################
+#=======================================#
+#   InnoDB Memory resources             #
+#=======================================#
+#可以设为物理内存的60%-80%,根据实际内存情况修改，如果innodb_buffer_pool_size大于1G,建议设置innodb_buffer_pool_instances
+innodb_buffer_pool_size 				 = 20G
+#innodb_buffer_pool_size 				 = 45G(如物理64GB)
+#取值要考虑到每个buffer pool instance最小也要大于1G
+innodb_buffer_pool_instances 	   = 16
+#innodb_log_buffer_size没有必要设置过大
+innodb_log_buffer_size					 = 32M
+innodb_additional_mem_pool_size  = 16M
+innodb_max_dirty_pages_pct       = 80
+innodb_open_files                = 4096
+#innodb_undo_tablespaces初始安装install db MySQL实例就要设置，后续修改启动会报错，如非初始化，请不要添加或改动
+innodb_undo_tablespaces          = 8
+innodb_undo_logs                 = 128
+#=======================================#
+#		InnoDB Table-space and logging      #
+#=======================================#
+innodb_data_file_path  					 = ibdata1:12M:autoextend
+#共享数据文件表壳自动扩展的大小
+innodb_autoextend_increment      = 128M
+#存储每个InnoDB表和它的索引在它自己的单独文件
+innodb_file_per_table            = 1
+#设定日志组中日志文件的个数。InnoDB以循环的方式使用这些日志文件，缺省为2，combined size of all logs <4GB. <16G_RAM = 2, >16G_RAM = 3  
+innodb_log_files_in_group        = 6
+#最大值为innodb_buffer_pool_size/innodb_log_files_in_group,64G_RAM+=368,24G_RAM+=256,8G_RAM+=128,2G_RAM+=64 
+innodb_log_file_size             = 512M
+#=======================================#
+#		InnoDB I/O resources                #
+#=======================================#
+#Mysql直接读写磁盘
+innodb_flush_method            	 = O_DIRECT
+#设置为1-ACID compliant operation,每一次事务提交或事务外的指令都需要把日志写入（flush）硬盘;2-写入系统缓存,整个操作系统挂了时才可能丢失1秒钟的数据；缺省为1。
+#对于非关键交易型数据,采用2即可以满足高性能的日志操作,若要非常可靠的数据写入保证,则需要设置为1,此时每个commit都导致一次磁盘同步,性能下降。
+innodb_flush_log_at_trx_commit   = 0
+#缺省为4,最大64,应该设为4 * # of CPU cores
+innodb_read_io_threads				   = 16
+innodb_write_io_threads				   = 16
+#与系统的IOPS相关,用来表示磁盘的IO吞吐量，对于刷新到磁盘页的数量，会按照innodb_io_capacity的百分比来进行控制。缺省为200,如果只有一块磁盘7200rpm,降为100,机械硬盘最多300,SSD可配2000以上,
+innodb_io_capacity         			 = 800
+#在合并插入缓冲时，合并插入缓冲的数量为innodb_io_capacity的5%
+#在从缓冲区刷新脏页时，刷新脏页的数量为innodb_io_capacity
+#=======================================#
+#   InnoDB Timeout settings             # 
+#=======================================#
+#事务等待获取资源等待的最长时间，单位秒，缺省为50
+innodb_lock_wait_timeout         = 30
+#=======================================#
+#   InnoDB file format                  #
+#=======================================#
+#如果要使用压缩，一定需要先使用innodb_file_format =Barracuda格式
+innodb_file_format						   = Barracuda
+innodb_file_format_check				 = 1
+innodb_file_format_max					 = Barracuda
+############################################################################
+###	                       Replication                                   ###
+############################################################################
+#slave复制进程不随mysql启动
+skip-slave-start
+#开启多线程复制
+slave_parallel_workers					 = 64
+#主从复制事件校验
+binlog_checksum							     = CRC32
+master_verify_checksum	 = 1
+slave_sql_verify_checksum = 1
+log-slave-updates = true 
+slave-skip-errors=1146
+#########开启GTID################
+gtid-mode      = on
+enforce-gtid-consistency = true
+#复制授权信息记录到表里面,实现在崩溃时保证二进制及从服务器安全的功能
+relay_log_info_repository 			 = TABLE
+master_info_repository    			 = TABLE
+relay_log_recovery    = 1
+#关闭自动清除执行完的relay log，注意定期清理，以防磁盘被撑满
+relay_log_purge	     = 1
+#可确保无信息丢失
+sync_master_info       = 1
+slave-parallel-workers = 10
+#限制普通用户对从数据库的更新操作,Default: False
+read_only                  		 = on 
+#=======================================#
+#      开启二进制日志binlog seting      #
+#=======================================#
+log-bin                 				 = mysqlDB2-bin
+binlog_format           				 = MIXED
+binlog_cache_size       				 = 16M
+max_binlog_size         				 = 128M
+max_binlog_cache_size   				 = 1024M
+expire_logs_days        				 = 15
+binlog-checksum=CRC32
+#指定需要记录binlog的数据库
+#binlog-do-db = 
+#指定忽略记录binlog的数据库
+binlog-ignore-db    = mysql 
+binlog-ignore-db    = information_schema
+binlog-ignore-db    = performance_schema
+#设置为0,不做任何强制性的磁盘刷新指令,这时候的性能是最好的，设置为当每进行n次事务提交之后，MySQL将进行一次fsync之类的磁盘同步指令来将binlog_cache中的数据强制写入磁盘，设置为1的时候，是最安全但是性能损耗最大的；缺省为0。
+sync_binlog							         = 1
+#可以在binlog_format=row中记录执行的SQL语句
+binlog_rows_query_log_events		 = 1
+#从服务器的更新写入二进制日志,在主主和多主架构下需要
+log_slave_updates				         = 1  
+#=======================================#
+#               report                  #
+#=======================================#
+#show-slave-auth-info
+report-host= 10.30.238.202
+#report-password=
+report-port= 3306
+#report-user=
+#开启基于GTID的半同步复制
+#在master上
+#rpl_semi_sync_master_enabled		 = ON
+#在slave上配置
+#rpl_semi_sync_slave_enabled		 = ON
+#########################################################################
+###    								MyISAM Settings                                 ###
+#########################################################################
+key_buffer_size    					     = 128M
+#可以将表和数据库从数据库目录移动到其它的位置并且用指向新位置的符号链接进行替换
+symbolic-links						       = 1
+#########################################################################
+###								Charset and Collation                               ###
+#########################################################################
+character_set_server    			   = utf8
+collation_server				    	   = utf8_general_ci 
+[mysql]
+no-auto-rehash
+default-character-set 				   = utf8
+#根据需要设置mysql命令行工具提示符格式
+#prompt \R:\m:\s \u@\h[\d]>
+[mysqldump]
+quick
+quote-names
+max_allowed_packet      		     = 64M
+
+
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
